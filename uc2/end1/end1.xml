@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- camel-k: language=xml -->
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://camel.apache.org/schema/spring"
+        xsi:schemaLocation="
+            http://camel.apache.org/schema/spring
+            https://camel.apache.org/schema/spring/camel-spring.xsd">
+
+    <route id="end1">
+      <from uri="platform-http:/?httpMethodRestrict=POST&amp;matchOnUriPrefix=true"/>
+      <!-- <convertBodyTo type="String"/> -->
+
+      <log message="path: ${header.CamelHttpUri}"/>
+      <log message="uri: ${header.CamelHttpPath}"/>
+      <log message="got Servlet HTTP request: ${body}"/>
+    </route>
+
+</routes>

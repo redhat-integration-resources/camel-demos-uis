@@ -1,0 +1,1 @@
+camel run mock-service-registry.xml --port 8200

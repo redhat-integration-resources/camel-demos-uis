@@ -1,0 +1,116 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "Fulfillment",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+          "url": "http://localhost:8080/camel",
+          "description": "Local host, for development"
+        }
+    ],
+    "paths": {
+        "/submit": {
+            "post": {
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Fulfillment"
+                            },
+                            "examples": {
+                                "Job completed for System-1": {                                    
+                                    "value": {
+                                        "status":"completed",
+                                        "system_id":"system1",
+                                        "identifier":"41"
+                                    }
+                                },
+                                "Job completed for System-2": {                                    
+                                    "value": {
+                                        "status":"completed",
+                                        "system_id":"system2",
+                                        "identifier":"42"
+                                    }
+                                },
+                                "Job failed for System-1": {                                    
+                                    "value": {
+                                        "status":"failed",
+                                        "system_id":"system1",
+                                        "identifier":"43"
+                                    }
+                                },
+                                "Job failed for System-2": {                                    
+                                    "value": {
+                                        "status":"failed",
+                                        "system_id":"system2",
+                                        "identifier":"44"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Status"
+                                },
+                                "examples": {
+                                    "sample status": {
+                                        "value": {
+                                            "status": "success"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "description": "Fulfillment operation status"
+                    }
+                },
+                "operationId": "submitFulfillment"
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Status": {
+                "title": "Root Type for Status",
+                "description": "",
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string"
+                    }
+                },
+                "example": {
+                    "status": "success"
+                }
+            },
+            "Fulfillment": {
+                "title": "Root Type for Fulfillment",
+                "description": "",
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string"
+                    },
+                    "system_id": {
+                        "type": "string"
+                    },
+                    "identifier": {
+                        "type": "string"
+                    }
+                },
+                "example": {
+                    "status":"completed",
+                    "system_id":"system1",
+                    "identifier":"41"
+                }
+            }
+        }
+    }
+}

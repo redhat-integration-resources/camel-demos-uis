@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- camel-k: language=xml -->
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://camel.apache.org/schema/spring"
+        xsi:schemaLocation="
+            http://camel.apache.org/schema/spring
+            https://camel.apache.org/schema/spring/camel-spring.xsd">
+
+
+    <route id="bridge-amqp-kafka">
+        <from uri="kamelet:jms-amqp-10-source?remoteURI={{amqp.url}}&amp;destinationName=fulfillment"/>
+        
+        <log message="got: ${body}"/>
+
+        <to uri="kafka:fulfillment?brokers={{kafka.bootstrap}}"/>
+    </route>
+
+
+<!--     <route id="kafka-consumer">
+        <from uri="kafka:fulfillment?brokers={{kafka.bootstrap}}&amp;autoOffsetReset=earliest"/>
+
+        
+        <log message="from KAFKA: ${body}"/>
+    </route>
+ -->
+
+</routes>

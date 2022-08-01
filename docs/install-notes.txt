@@ -1,0 +1,307 @@
+SERVICE REGISTRY
+----------------
+
+	Create a namespace/project:
+
+		demo-apis
+
+
+	Requirements:
+		- PostgreSQL
+
+	Deploy DB:
+
+		- From Template
+
+			1. From developer console click Add -> Database -> PosgreSQL (Ephemeral) 
+			2. Instantiate Template
+				- define username/passord (admin/admin) 
+				- click [Create]
+
+		- From Operator
+			  (certified) 
+			  Crunchy Postgres for Kubernetes
+			  5.1.2 provided by Crunchy Data
+
+			  > (Ephemeral only does not exist)
+			  > use PostgreSQL storage
+
+			  	ref:
+					- https://access.crunchydata.com/documentation/postgres-operator/5.1.2/tutorial/create-cluster/
+
+			  YAML:
+
+				kind: PostgresCluster
+					apiVersion: postgres-operator.crunchydata.com/v1beta1
+					metadata:
+					  name: example
+					  namespace: demo-sr
+					spec:
+					  postgresVersion: 13
+					  instances:
+					    - dataVolumeClaimSpec:
+					        accessModes:
+					          - ReadWriteOnce
+					        resources:
+					          requests:
+					            storage: 1Gi
+					      replicas: 1
+					  backups:
+					    pgbackrest:
+					      image: registry.developers.crunchydata.com/crunchydata/crunchy-pgbackrest:ubi8-2.38-2
+					      repos:
+					      - name: repo1
+					        volume:
+					          volumeClaimSpec:
+					            accessModes:
+					            - "ReadWriteOnce"
+					            resources:
+					              requests:
+					                storage: 1Gi
+
+
+	Deploy Service Registry
+
+
+		For DB from Template:
+
+			apiVersion: registry.apicur.io/v1
+			kind: ApicurioRegistry
+			metadata:
+			  name: example-apicurioregistry-sql
+			spec:
+			  configuration:
+			    persistence: 'sql'
+			    sql:
+			      dataSource:
+			        url: 'jdbc:postgresql://postgresql:5432/sampledb?password=admin&user=admin'
+			        userName: 'admin'
+			        # password: '<password>' # Optional
+
+
+		For DB from Operator
+
+			Secret: use PostgreSQL'e example secret. It contains the credentials to connect to DB.
+
+			apiVersion: registry.apicur.io/v1
+			kind: ApicurioRegistry
+			metadata:
+			  name: example-apicurioregistry-sql
+			spec:
+			  configuration:
+			    persistence: 'sql'
+			    sql:
+			      dataSource:
+			        url: 'jdbc:postgresql://example-primary.demo-sr.svc:5432/example?password=oslGs9%29%3AD%2C%5Dy85C-9%3D6.ZDE%2B&user=example'
+			        userName: 'example'
+			        # password: '<password>' # Optional
+
+
+GET ARTIFACTS:
+--------------
+curl http://example-apicurioregistry-sql.demo-sr.router-default.apps.cluster-wbwlv.wbwlv.sandbox1017.opentlc.com/apis/registry/v2/groups/default/artifacts
+
+
+GET METADATA:
+--------------
+curl http://example-apicurioregistry-sql.demo-sr.router-default.apps.cluster-wbwlv.wbwlv.sandbox1017.opentlc.com/apis/registry/v2/groups/default/artifacts/fad04680-44fc-411d-a2fe-e274029756b2/meta
+
+
+GET API:
+--------
+curl http://example-apicurioregistry-sql.demo-sr.router-default.apps.cluster-bwlv.wbwlv.sandbox1017.opentlc.com/apis/registry/v2/groups/default/artifacts/fad04680-44fc-411d-a2fe-e274029756b2
+
+curl http://example-apicurioregistry-sql.demo-sr.router-default.apps.cluster-bwlv.wbwlv.sandbox1017.opentlc.com/apis/registry/v2/ids/globalIds/1
+
+curl http://example-apicurioregistry-sql.demo-sr.router-default.apps.cluster-bwlv.wbwlv.sandbox1017.opentlc.com/apis/registry/v2/ids/contentIds/1
+
+
+`oc get route api-medium -o jsonpath='{..spec.host}'`
+
+
+
+------------------
+
+uc2
+
+Create namespace:
+
+	demo-amq
+	(if you choose a different namespace, update YAMLs)
+
+
+AMQ Broker:
+
+	YAML:
+		- 1 instance
+		- amqp 
+		  > all interfaces (for port-forward)
+	
+		  acceptors:
+		    - bindToAllInterfaces: true
+		      name: amqp
+		      port: 5672
+		      protocols: amqp
+
+	Example:
+
+		kind: ActiveMQArtemis
+		apiVersion: broker.amq.io/v1beta1
+		metadata:
+		  name: broker1
+		  application: broker1-app
+		spec:
+		  deploymentPlan:
+		    image: placeholder
+		    size: 1
+		    requireLogin: false
+		    persistenceEnabled: false
+		    journalType: nio
+		    messageMigration: false
+		    jolokiaAgentEnabled: false
+		    managementRBACEnabled: true
+		  acceptors:
+		    - name: amqp
+		      port: 5672
+		      protocols: amqp
+		      bindToAllInterfaces: true
+
+
+Interconnect
+
+	YAML:
+
+		spec:
+		  connectors:
+		    - name: my-broker
+		      host: broker1-amqp-0-svc.demo-amq.svc.cluster.local
+		      port: 5672
+		      routeContainer: true
+		  linkRoutes:
+		    - prefix: test
+		      direction: in
+		      connection: my-broker
+		    - prefix: test
+		      direction: out
+		      connection: my-broker
+
+	Example
+
+		kind: Interconnect
+		apiVersion: interconnectedcloud.github.io/v1alpha1
+		metadata:
+		  name: cluster1-router-mesh
+		spec:
+		  deploymentPlan:
+		    size: 2
+		    role: interior
+		    placement: Any
+		  connectors:
+		    - name: my-broker
+		      host: broker1-amqp-0-svc.demo-amq.svc.cluster.local
+		      port: 5672
+		      routeContainer: true
+		  linkRoutes:
+		    - prefix: fulfillment
+		      direction: in
+		      connection: my-broker
+		    - prefix: fulfillment
+		      direction: out
+		      connection: my-broker
+
+
+
+
+Use Case 2:
+===========
+
+Expose AMQ Console:
+
+	oc expose service broker1-hdls-svc
+
+
+Deploy .NET AMQP client:
+
+	ref:
+		https://developers.redhat.com/blog/2018/07/05/deploy-dotnet-core-apps-openshift
+
+	Config:
+		ensure the AMQP connection string is valid for your environment.
+
+	Command:
+
+		oc new-app --name=client-dotnet openshift/dotnet:3.1-el7~https://gitlab.com/sandbox-public/dotnet-amqp
+
+	From Console:
+
+		1. From Developer console, click 'Add' > 'Import from Git'
+		2. Enter
+			https://gitlab.com/sandbox-public/dotnet-amqp.git
+		3. Click 'Edit import Strategy'
+		4. Select a [IST] 3.1 version
+		5. Unclick [Create a route to the Application]
+		6. Click [Create]
+
+OpenTelemetry:
+
+ 1) install:
+
+		Red Hat OpenShift distributed tracing platform (1.34.1-5)
+		(defaults to all namespaces in 'openshift-distributed-tracing')
+
+ 2) create a default instance
+
+ 	For example, create a new namespace:
+
+ 		demo-tracing
+
+ 	and create a default Jaeger instance
+
+
+
+OpenTelemetry
+
+	Pre-requisite:
+
+		- have RH OpenShift distributed tracing installed
+
+	1) install:
+
+		Red Hat OpenShift distributed tracing data collection (0.49.0-5)
+		(all namespaces, 'openshift-operators')
+
+	2) create an instance
+
+			kind: OpenTelemetryCollector
+			apiVersion: opentelemetry.io/v1alpha1
+			metadata:
+			  name: telemetry-collector
+			spec:
+			  config: |
+			    receivers:
+			      otlp:
+			        protocols: 
+			          grpc:
+			          http:
+
+			    exporters:
+			      logging:
+			      jaeger:
+			        endpoint: jaeger-all-in-one-inmemory-collector-headless.demo-tracing.svc.cluster.local:14250
+			        tls:
+			          ca_file: "/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt"
+
+			    service:
+			      pipelines:
+			        traces:
+			          receivers: [otlp]
+			          exporters: [logging,jaeger]
+
+	3) Ensure the POD running displays in the logs:
+
+ 		> "Everything is ready. Begin running and processing data."
+
+ 	4) Use in Quarkus the OTLP exporter to port 4317
+
+
+

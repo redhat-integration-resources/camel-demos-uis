@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- camel-k: language=xml -->
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://camel.apache.org/schema/spring"
+        xsi:schemaLocation="
+            http://camel.apache.org/schema/spring
+            https://camel.apache.org/schema/spring/camel-spring.xsd">
+
+
+    <route id="end2">
+        <from uri="kamelet:jms-amqp-10-source?remoteURI={{amqp.url}}&amp;destinationName=end2.notification"/>
+        
+        <log message="got AMQP notification: ${body}"/>
+    </route>
+
+
+</routes>

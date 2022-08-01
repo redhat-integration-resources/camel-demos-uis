@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- camel-k: language=xml -->
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://camel.apache.org/schema/spring"
+        xsi:schemaLocation="
+            http://camel.apache.org/schema/spring
+            https://camel.apache.org/schema/spring/camel-spring.xsd">
+
+
+
+    <route id="kafka-consumer">
+        <from uri="kafka:fulfillment?brokers={{kafka.bootstrap}}&amp;autoOffsetReset=earliest"/>
+    
+        <log message="from KAFKA: ${body}"/>
+
+        <to uri="direct:main"/>
+    </route>
+
+
+
+    <route id="main">
+      <from uri="direct:main"/>
+
+      <setProperty name="id">
+        <jsonpath>$.identifier</jsonpath>
+      </setProperty>
+      <setProperty name="system">
+        <jsonpath>$.system_id</jsonpath>
+      </setProperty>
+      <setProperty name="status">
+        <jsonpath>$.status</jsonpath>
+      </setProperty>
+
+      <!-- <log message="got MESSAGE ${properties:router.endpoint.${property.system}}"/> -->
+
+      <choice>
+        <when>
+          <simple>${exchangeProperty.status} == 'completed'</simple>
+          <setProperty name="path">
+            <simple>completion</simple>
+          </setProperty>
+        </when>
+        <otherwise>
+          <setProperty name="path">
+            <simple>failure</simple>
+          </setProperty>
+        </otherwise>
+      </choice>
+
+      <log message="got message: ${exchangeProperty.system}"/>
+      <log message="got message: ${exchangeProperty.path}"/>
+
+
+      <setBody>
+        <simple>{"status":"${exchangeProperty.status}","identifier":"${exchangeProperty.id}"}</simple>
+      </setBody>
+
+      <log message="got message: ${body}"/>
+
+
+      <choice>
+        <when>
+          <simple>${exchangeProperty.system} == 'system1'</simple>
+          <to uri="direct:target-system1"/>
+        </when>
+        <when>
+          <simple>${exchangeProperty.system} == 'system2'</simple>
+          <to uri="direct:target-system2"/>
+        </when>
+        <otherwise>
+            <log message="ignoring notification for system: ${exchangeProperty.system}"/>
+        </otherwise>
+      </choice>
+
+    </route>
+
+    <route id="target-system1">
+        <from uri="direct:target-system1"/>
+        <log message="sending to ${routeId}"/>
+
+        <removeHeaders pattern="*"/>
+
+        <to uri="http:end1:80/notification"/>
+    </route>
+
+    <route id="target-system2">
+        <from uri="direct:target-system2"/>
+        <log message="sending to ${routeId}"/>
+
+
+        <removeHeaders pattern="*"/>
+
+        <to uri="kamelet:jms-amqp-10-sink?remoteURI={{amqp.url}}&amp;destinationName=end2.notification" pattern="InOnly"/>
+    </route>
+</routes>

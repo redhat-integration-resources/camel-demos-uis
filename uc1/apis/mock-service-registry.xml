@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<routes>
+  <route>
+    <from uri="platform-http:/?matchOnUriPrefix=true"/>
+    <to uri="language:constant:resource:file:openapi.json"/>
+  </route>
+</routes>
