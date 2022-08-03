@@ -19,6 +19,9 @@
     <!-- URL to access the remote Service Registry -->
     <service-registry.url>http://example-apicurioregistry-sql.demo-apis.router-default.apps.cluster-dvk76.dvk76.sandbox1357.opentlc.com/apis/registry/v2</service-registry.url>
 
+    <!-- API ID to retrieve -->
+    <service-registry.artifact.id>4dcf1a6f-bed7-44eb-99a0-3edf69ede7d5</service-registry.artifact.id>
+
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -108,20 +111,12 @@
     </dependency>
 
 
-
+    <!-- Dependencies to enable Hawtio access and debug capabilities -->
     <dependency>
       <groupId>org.jolokia</groupId>
       <artifactId>jolokia-jvm</artifactId>
       <version>1.7.0</version>
       <exclusions>
-        <exclusion>
-          <groupId>com.googlecode.json-simple</groupId>
-          <artifactId>json-simple</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.jolokia</groupId>
-          <artifactId>jolokia-core</artifactId>
-        </exclusion>
         <exclusion>
           <groupId>com.sun</groupId>
           <artifactId>tools</artifactId>
@@ -129,32 +124,10 @@
       </exclusions> 
     </dependency>
     <dependency>
-<!--       <groupId>org.apache.camel</groupId>
-      <artifactId>camel-management</artifactId>
-     -->
-            <groupId>org.apache.camel.quarkus</groupId>
-            <artifactId>camel-quarkus-management</artifactId>
+      <groupId>org.apache.camel.quarkus</groupId>
+      <artifactId>camel-quarkus-management</artifactId>
     </dependency>
 
-
-
-
-    <dependency>
-      <groupId>org.apache.camel.quarkus</groupId>
-      <artifactId>camel-quarkus-xml-jaxb</artifactId>
-    </dependency>
-
-
-<!-- <dependency>
-    <groupId>org.apache.camel.quarkus</groupId>
-    <artifactId>camel-quarkus-xslt</artifactId>
-</dependency> -->
-<!-- quarkus.camel.xslt.features."http\://javax.xml.XMLConstants/feature/secure-processing"=false -->
-
-<!--     <dependency>
-      <groupId>org.apache.camel.quarkus</groupId>
-      <artifactId>camel-quarkus-support-xalan</artifactId>
-    </dependency> -->
 
 
         <!-- Test -->
@@ -264,7 +237,6 @@
       <plugin>
         <groupId>io.apicurio</groupId>
         <artifactId>apicurio-registry-maven-plugin</artifactId>
-        <!-- <version>${apicurio.version}</version> -->
         <executions>
           <execution>
             <phase>generate-sources</phase>
@@ -276,7 +248,7 @@
                 <artifacts>
                     <artifact>
                         <groupId>default</groupId>
-                        <artifactId>9e317b8a-52a4-4309-b632-bcaa2fd12caa</artifactId>
+                        <artifactId>${service-registry.artifact.id}</artifactId>
                         <file>${project.build.directory}/classes/META-INF/openapi.json</file>
                         <overwrite>true</overwrite>
                     </artifact>
