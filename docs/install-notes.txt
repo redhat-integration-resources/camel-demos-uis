@@ -230,17 +230,22 @@ Deploy .NET AMQP client:
 
 	Command:
 
-		oc new-app --name=client-dotnet openshift/dotnet:3.1-el7~https://gitlab.com/sandbox-public/dotnet-amqp
+		oc new-app --name=client-dotnet openshift/dotnet:3.1-el7~https://github.com/redhat-integration-resources/camel-demos-uis --context-dir=uc2/client-dotnet
 
 	From Console:
 
 		1. From Developer console, click 'Add' > 'Import from Git'
 		2. Enter
-			https://gitlab.com/sandbox-public/dotnet-amqp.git
-		3. Click 'Edit import Strategy'
-		4. Select a [IST] 3.1 version
-		5. Unclick [Create a route to the Application]
-		6. Click [Create]
+			https://github.com/redhat-integration-resources/camel-demos-uis
+
+		3. Click 'Show advanced Git options'
+			In 'Context Dir' enter:
+			/uc2/client-dotnet
+
+		4. Click 'Edit import Strategy'
+		5. Select a [IST] 3.1 version
+		6. Unclick [Create a route to the Application]
+		7. Click [Create]
 
 OpenTelemetry:
 
